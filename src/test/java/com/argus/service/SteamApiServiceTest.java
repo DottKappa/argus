@@ -80,4 +80,26 @@ public class SteamApiServiceTest {
         assertTrue(result.isPresent());
         assertEquals(validSteamId, result.get());
     }
+
+    @Test 
+    @DisplayName ("Restituisce Optional.empty() con errore HTTP")
+    void returnEmptyOnHttpError() throws Exception {
+        HttpResponse<String> errorResponse = mock(HttpResponse.class);
+        when(errorResponse.statusCode()).thenReturn(500);
+        doReturn(errorResponse).when(mockHttpClient).send(any(), any());
+
+        Optional<String> result = apiService.resolveUsernameUrl("gabe");
+
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    @DisplayName("Restituisce Optional.empty() in caso di eccezione di rete o timeout")
+    void returnEmptyOnNetworkException() throws Exception {
+        when(mockHttpClient.send(any(), any())).thenThrow(new java.io.IOException("Network down"));
+
+        Optional<String> result = apiService.resolveUsernameUrl("gabe");
+
+        assertTrue(result.isEmpty());
+    }
 }
