@@ -1,9 +1,16 @@
 package com.argus.controller;
 
+import com.argus.service.GameDto;
+import com.argus.service.PlayerWorkflowService;
 import com.argus.service.SteamApiService;
+
+import javafx.beans.property.SimpleListProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
 
@@ -11,25 +18,22 @@ public class UserSearchController {
     
     private static final Logger LOGGER = Logger.getLogger(UserSearchController.class.getName());
 
-    private final SteamApiService steamApiService;
+    private final PlayerWorkflowService workflowService;
 
+    // UI
     private final StringProperty usernameInput = new SimpleStringProperty("");
     private final StringProperty statusMessage = new SimpleStringProperty("");
-    private final StringProperty resolvedSteamId = new SimpleStringProperty("");
-
-    public UserSearchController(SteamApiService steamApiService) {
-        this.steamApiService = steamApiService;
-    }
-
-    // --- Getter per i Binding JavaFX ---
     public StringProperty usernameInputProperty() { return usernameInput; }
     public StringProperty statusMessageProperty() { return statusMessage; }
-    public StringProperty resolvedSteamIdProperty() { return resolvedSteamId; }
+    public SimpleListProperty<GameDto> ownedGamesProperty() { return ownedGamesProperty; }
 
-    /**
-     * Esegue la logica di business per la risoluzione dello SteamID a partire dall'input utente.
-     * Implementa la gestione robusta degli errori e lo stato applicativo (CRUD/Sessione).
-     */
+    private final ObservableList<GameDto> ownedGamesList = FXCollections.observableArrayList();
+    private final SimpleListProperty<GameDto> ownedGamesProperty = new SimpleListProperty<>(ownedGamesList);
+
+    public UserSearchController(PlayerWorkflowService workflowService) {
+        this.workflowService = workflowService;
+    }
+
     public void handleSearchAction()
     {
         String username = usernameInput.get();
@@ -43,33 +47,19 @@ public class UserSearchController {
         LOGGER.info("Searching steamID for user: " + username);
 
         try {
-            Optional<String> steamIdOpt = steamApiService.resolveUsernameUrl(username.trim());
-
-            if(steamIdOpt.isPresent()) {
-                String id = steamIdOpt.get();
-                resolvedSteamId.set(id);
-                statusMessage.set("Utente trovato! SteamID64: " + id);
-                LOGGER.info("User found! SteamID64: " + id);
-
-                saveOrUpdateUserSession(username.trim(), id);
+            Optional<List<GameDto>> gamesOpt = workflowService.fetchLibraryForUsername(username.trim());
+            
+            if(gamesOpt.isPresent()) {
+                List<GameDto> games = gamesOpt.get();
+                ownedGamesList.setAll(games);
+                statusMessage.set("Libreria caricata. Giochi trovati: " + games.size());
             } else {
-                resolvedSteamId.set("");
                 statusMessage.set("Utente non trovato per username: " + username);
                 LOGGER.info("User not found for username: " + username);
             }
         } catch (Exception e) {
-            resolvedSteamId.set("");
-            statusMessage.set("Errore durante la chiamata API");
-            LOGGER.info("Error on API calls: " + e.getMessage());
+            statusMessage.set("Errore durante la chiamata l'esecuzione");
+            LOGGER.info("Error on controller: " + e.getMessage());
         }
-    }
-
-    /**
-     * Simula la logica CRUD di persistenza o aggiornamento della sessione utente
-     */
-    private void saveOrUpdateUserSession(String username, String steamId) {
-        // Qui in futuro collegheremo il repository locale (es. SQLite o file JSON) 
-        // per memorizzare lo storico delle ricerche o l'utente attivo.
-        // LOGGER.fine("Aggiornato stato sessione locale per: " + username);
     }
 }
