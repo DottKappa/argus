@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import net.bytebuddy.agent.builder.AgentBuilder.CircularityLock.Global;
 
 import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.List;
 import java.util.Optional;
@@ -53,5 +54,56 @@ public class SteamPlayerServiceTest {
         assertTrue(gamesOpt.isPresent());
         assertEquals(2, gamesOpt.get().size());
         assertEquals("Counter-Strike: Global Offensive", gamesOpt.get().get(0).getName());
+
+        verify(mockHttpClient).send(argThat((HttpRequest request) ->
+                request.uri().getQuery().contains("include_played_free_games=true")), any());
+    }
+
+    @Test
+    void throwsWhenSteamDoesNotReturnGamesList() throws Exception {
+        when(mockResponse.statusCode()).thenReturn(200);
+        when(mockResponse.body()).thenReturn("{\"response\":{}}");
+        doReturn(mockResponse).when(mockHttpClient).send(any(), any());
+
+        IllegalStateException error = assertThrows(IllegalStateException.class,
+                () -> playerService.getOwnedGames("76561198365758309"));
+
+        assertTrue(error.getMessage().contains("privacy dei dettagli dei giochi"));
+    }
+
+    @Test
+    void reportsSteamHttpErrors() throws Exception {
+        when(mockResponse.statusCode()).thenReturn(403);
+        doReturn(mockResponse).when(mockHttpClient).send(any(), any());
+
+        IllegalStateException error = assertThrows(IllegalStateException.class,
+                () -> playerService.getOwnedGames("76561198365758309"));
+
+        assertTrue(error.getMessage().contains("HTTP 403"));
+    }
+
+    @Test
+    void rejectsMissingApiKey() {
+        SteamPlayerService serviceWithoutKey = new SteamPlayerService(mockHttpClient, " ");
+
+        IllegalStateException error = assertThrows(IllegalStateException.class,
+                () -> serviceWithoutKey.getOwnedGames("76561198365758309"));
+
+        assertTrue(error.getMessage().contains("STEAM_API_KEY"));
+        verifyNoInteractions(mockHttpClient);
+    }
+
+    @Test
+    void getsPersonaNameForSteamId() throws Exception {
+        when(mockResponse.statusCode()).thenReturn(200);
+        when(mockResponse.body()).thenReturn("""
+                {"response":{"players":[{"personaname":"Alice"}]}}
+                """);
+        doReturn(mockResponse).when(mockHttpClient).send(any(), any());
+
+        assertEquals(Optional.of("Alice"), playerService.getPlayerName("76561198365758309"));
+        verify(mockHttpClient).send(argThat((HttpRequest request) ->
+                request.uri().getPath().endsWith("/ISteamUser/GetPlayerSummaries/v0002/")
+                        && request.uri().getQuery().contains("steamids=76561198365758309")), any());
     }
 }

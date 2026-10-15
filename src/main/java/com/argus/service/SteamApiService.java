@@ -9,6 +9,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -31,8 +32,8 @@ public class SteamApiService {
     }
 
     /**
-     * Converte un vanity username in un steamID64
-     * @param steamId
+     * Converte uno username o un link profilo Steam in uno SteamID64.
+     * @param username Steam username, link profilo o SteamID64
      * @return Optional
      */
     public Optional<String> resolveUsernameUrl(String username)
@@ -42,6 +43,13 @@ public class SteamApiService {
         }
 
         String cleaned = username.trim();
+        if (cleaned.contains("://")) {
+            Optional<String> profileIdentifier = extractProfileIdentifier(cleaned);
+            if (profileIdentifier.isEmpty()) {
+                return Optional.empty();
+            }
+            cleaned = profileIdentifier.get();
+        }
 
         // Se è già steamID64 lo ritorno senza fare niente
         if (cleaned.matches("^7656119\\d{10}$")) {
@@ -69,10 +77,78 @@ public class SteamApiService {
                 }
             }
         } catch (Exception e) {
-            System.err.println("ERROR: Can't find vanity username url -> " + e.getMessage());            
+            System.err.println("ERROR: Can't resolve Steam username -> " + e.getMessage());
         }
 
         return Optional.empty();
+    }
+
+    private Optional<String> extractProfileIdentifier(String input)
+    {
+        Optional<URI> profileUri = parseSteamCommunityUri(input);
+        if (profileUri.isEmpty()) {
+            return Optional.empty();
+        }
+
+        List<String> pathParts = getProfilePathParts(profileUri.get());
+        if (pathParts.size() != 2) {
+            return Optional.empty();
+        }
+
+        String profileType = pathParts.get(0);
+        String profileIdentifier = pathParts.get(1);
+        if (profileType.equalsIgnoreCase("id") && !profileIdentifier.isBlank()) {
+            return Optional.of(profileIdentifier);
+        }
+        if (profileType.equalsIgnoreCase("profiles")
+                && profileIdentifier.matches("^7656119\\d{10}$")) {
+            return Optional.of(profileIdentifier);
+        }
+        return Optional.empty();
+    }
+
+    public Optional<String> extractVanityUsername(String profileUrl)
+    {
+        if (profileUrl == null || profileUrl.isBlank()) {
+            return Optional.empty();
+        }
+        Optional<URI> profileUri = parseSteamCommunityUri(profileUrl);
+        if (profileUri.isEmpty()) {
+            return Optional.empty();
+        }
+
+        List<String> pathParts = getProfilePathParts(profileUri.get());
+        if (pathParts.size() == 2 && pathParts.get(0).equalsIgnoreCase("id")) {
+            return Optional.of(pathParts.get(1));
+        }
+        return Optional.empty();
+    }
+
+    private Optional<URI> parseSteamCommunityUri(String input)
+    {
+        try {
+            URI uri = URI.create(input);
+            String scheme = uri.getScheme();
+            String host = uri.getHost();
+            if (scheme != null
+                    && (scheme.equalsIgnoreCase("http") || scheme.equalsIgnoreCase("https"))
+                    && host != null
+                    && (host.equalsIgnoreCase("steamcommunity.com")
+                    || host.equalsIgnoreCase("www.steamcommunity.com"))
+                    && uri.getUserInfo() == null) {
+                return Optional.of(uri);
+            }
+        } catch (IllegalArgumentException e) {
+            return Optional.empty();
+        }
+        return Optional.empty();
+    }
+
+    private List<String> getProfilePathParts(URI uri)
+    {
+        return Arrays.stream(uri.getPath().split("/"))
+                .filter(part -> !part.isEmpty())
+                .toList();
     }
 
     /**

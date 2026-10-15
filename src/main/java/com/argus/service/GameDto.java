@@ -13,4 +13,9 @@ public record GameDto (
     {
         return name;
     }
+
+    public int getAppId() 
+    {
+        return appId;
+    }
 }

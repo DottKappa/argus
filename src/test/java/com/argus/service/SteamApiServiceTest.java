@@ -81,6 +81,54 @@ public class SteamApiServiceTest {
         assertEquals(validSteamId, result.get());
     }
 
+    @Test
+    @DisplayName("Estrae lo SteamID64 da un link profilo diretto")
+    void returnSteamIdFromProfileUrl()
+    {
+        String validSteamId = "76561198169235781";
+
+        Optional<String> result = apiService.resolveUsernameUrl(
+                "https://steamcommunity.com/profiles/" + validSteamId + "/");
+
+        assertEquals(Optional.of(validSteamId), result);
+        verifyNoInteractions(mockHttpClient);
+    }
+
+    @Test
+    @DisplayName("Estrae lo username vanity da un link personalizzato")
+    void extractVanityUsernameFromProfileUrl()
+    {
+        assertEquals(Optional.of("alice"),
+                apiService.extractVanityUsername("https://steamcommunity.com/id/alice/"));
+        assertTrue(apiService.extractVanityUsername(
+                "https://steamcommunity.com/profiles/76561198365758309").isEmpty());
+    }
+
+    @Test
+    @DisplayName("Estrae lo username dal link e usa la conversione esistente")
+    void resolveUsernameFromProfileUrl() throws Exception {
+        String jsonResponse = """
+            {
+                "response": {
+                    "steamid": "76561197960384218",
+                    "success": 1
+                }
+            }
+            """;
+        when(mockResponse.statusCode()).thenReturn(200);
+        when(mockResponse.body()).thenReturn(jsonResponse);
+        when(mockHttpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
+                .thenReturn(mockResponse);
+
+        Optional<String> result = apiService.resolveUsernameUrl(
+                "https://steamcommunity.com/id/gabe/");
+
+        assertEquals(Optional.of("76561197960384218"), result);
+        verify(mockHttpClient).send(argThat(request ->
+                request.uri().getRawQuery().contains("vanityurl=gabe")),
+                any(HttpResponse.BodyHandler.class));
+    }
+
     @Test 
     @DisplayName ("Restituisce Optional.empty() con errore HTTP")
     void returnEmptyOnHttpError() throws Exception {

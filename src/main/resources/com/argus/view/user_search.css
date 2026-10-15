@@ -1,0 +1,121 @@
+.root-container {
+    -fx-padding: 20;
+}
+
+.root-container.light-theme {
+    -fx-background-color: #f4f5f7;
+}
+
+.root-container.dark-theme {
+    -fx-background-color: #20242b;
+}
+
+.root-container.light-theme .label,
+.root-container.light-theme .check-box {
+    -fx-text-fill: #24292f;
+}
+
+.root-container.dark-theme .label,
+.root-container.dark-theme .check-box {
+    -fx-text-fill: #e6edf3;
+}
+
+.title-label {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+}
+
+.root-container.light-theme .status-label {
+    -fx-text-fill: #555555;
+}
+
+.root-container.dark-theme .status-label {
+    -fx-text-fill: #c9d1d9;
+}
+
+.root-container.light-theme .text-field,
+.root-container.light-theme .combo-box,
+.root-container.light-theme .button {
+    -fx-background-color: #ffffff;
+    -fx-text-fill: #24292f;
+    -fx-border-color: #c7cbd1;
+}
+
+.root-container.dark-theme .text-field,
+.root-container.dark-theme .combo-box,
+.root-container.dark-theme .button {
+    -fx-background-color: #30363d;
+    -fx-text-fill: #e6edf3;
+    -fx-border-color: #59636e;
+}
+
+.root-container.light-theme .search-button {
+    -fx-background-color: #4caf50;
+    -fx-text-fill: #ffffff;
+}
+
+.root-container.dark-theme .search-button {
+    -fx-background-color: #238636;
+    -fx-text-fill: #ffffff;
+}
+
+.root-container.dark-theme .text-field .prompt-text {
+    -fx-fill: #a3adb8;
+}
+
+.root-container.dark-theme .combo-box .list-cell {
+    -fx-text-fill: #e6edf3;
+    -fx-background-color: #30363d;
+}
+
+.filter-bar,
+.game-details {
+    -fx-padding: 10;
+    -fx-background-radius: 6;
+}
+
+.root-container.light-theme .filter-bar,
+.root-container.light-theme .game-details {
+    -fx-background-color: #e9edf2;
+}
+
+.root-container.dark-theme .filter-bar,
+.root-container.dark-theme .game-details {
+    -fx-background-color: #2d333b;
+}
+
+.game-card {
+    -fx-background-radius: 6;
+    -fx-border-radius: 6;
+    -fx-border-width: 1;
+}
+
+.root-container.light-theme .game-card {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #d0d7de;
+}
+
+.root-container.dark-theme .game-card {
+    -fx-background-color: #2d333b;
+    -fx-border-color: #59636e;
+}
+
+.root-container.light-theme .selected-game-card {
+    -fx-border-color: #0969da;
+    -fx-border-width: 2;
+}
+
+.root-container.dark-theme .selected-game-card {
+    -fx-border-color: #58a6ff;
+    -fx-border-width: 2;
+}
+
+.root-container.light-theme .scroll-pane,
+.root-container.light-theme .scroll-pane > .viewport {
+    -fx-background-color: #f4f5f7;
+}
+
+.root-container.dark-theme .scroll-pane,
+.root-container.dark-theme .scroll-pane > .viewport {
+    -fx-background-color: #20242b;
+}
