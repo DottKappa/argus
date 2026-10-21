@@ -1,44 +1,39 @@
 # Argus
 
-Argus is a lightweight, high-performance monitoring and telemetry engine designed to collect, process, and forward system and application events in real time with minimal resource overhead. Inspired by the hundred-eyed giant of Greek mythology, Argus aims to provide clear, centralized visibility across distributed infrastructure and web applications.
-
----
+Argus is a lightweight, high-performance monitoring and telemetry engine developed in **Java**. Inspired by the hundred-eyed giant of Greek mythology, the project provides clear, centralized visibility across distributed systems and web applications in real time.
 
 ## Table of Contents
-- [Overview](#overview)
-- [Key Features](#key-features)
-- [Web Implementation Patterns](#web-implementation-patterns)
-- [Future Roadmap & Evolutions](#future-roadmap--evolutions)
-- [Getting Started](#getting-started)
-- [License](#license)
 
----
+* [Overview](#overview)
+* [Key Features](#key-features)
+* [Web Implementation Patterns](#web-implementation-patterns)
+* [Future Roadmap & Evolutions](#future-roadmap--evolutions)
+* [Getting Started](#getting-started)
+* [License](#license)
 
 ## Overview
 
-Modern web applications and distributed systems generate massive streams of events, errors, and performance metrics. Argus acts as an efficient ingestion gateway that intercepts these data streams, applies configurable filtering and processing rules, and dispatches them to specified targets or storage layers.
+Modern web applications and distributed systems generate massive streams of events, errors, and performance metrics. Argus acts as an efficient ingestion gateway that intercepts these data streams, applies configurable processing rules, and dispatches them to specified targets or storage layers.
 
 ### Key Highlights
-* **Low Resource Footprint**: Engine optimized for fast execution without clogging server memory or I/O.
-* **Modular Architecture**: Built to easily extend inputs, filters, and output handlers.
-* **API-Driven**: Native support for asynchronous REST API and WebSocket integrations.
 
----
+* **Java Ecosystem Reliability**: Built on Java to take advantage of robust concurrency management and high throughput.
+* **Low Overhead**: Optimized for fast execution and minimal resource consumption.
+* **Modular Architecture**: Designed for easy extension of input handlers, filters, and output channels.
 
 ## Key Features
 
 * **Centralized Data Ingestion**: Standardized endpoints for accepting JSON payloads from frontend and backend sources.
 * **Rule-Based Processing**: In-line evaluation of event severity, metadata, and custom conditions.
-* **Flexible Dispatching**: Route critical errors, user events, or metrics to external notification services, databases, or logs.
+* **Flexible Dispatching**: Route critical errors, user events, or metrics to external notification services or databases.
 * **State & Health Tracking**: Real-time evaluation of connected client and service states.
-
----
 
 ## Web Implementation Patterns
 
 Argus can be seamlessly integrated into web architectures at both the client and server levels. Below are standard implementation examples.
 
 ### 1. Client-Side Telemetry (Browser/Frontend)
+
 Capture user interactions, client errors, or performance markers asynchronously without blocking UI execution.
 
 ```javascript
@@ -65,7 +60,7 @@ async function trackEvent(eventType, payloadData) {
   }
 }
 
-// Example usage: Logging an unhandled error or specific UI interaction
+// Example usage
 window.addEventListener('error', (event) => {
   trackEvent('client_error', {
     message: event.message,
@@ -75,71 +70,67 @@ window.addEventListener('error', (event) => {
 });
 ```
 
-### 2. Server-Side Middleware / Webhooks (Node.js/Express)
-Intercept server errors, background job status updates, or internal service metrics and direct them to Argus.
+### 2. Server-Side Integration (Java / Spring Boot)
 
-```javascript
-const express = require('express');
-const app = express();
+Intercept server errors, background job status updates, or internal service metrics in Java and direct them to Argus.
 
-app.use(express.json());
+```java
+package com.argus.example.controller;
 
-// Express error handling middleware sending critical errors to Argus
-app.use(async (err, req, res, next) => {
-  const errorPayload = {
-    severity: 'CRITICAL',
-    path: req.path,
-    method: req.method,
-    message: err.message,
-    stack: err.stack,
-    timestamp: new Date().toISOString()
-  };
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 
-  try {
-    await fetch('https://api.yourdomain.com/argus/v1/alerts', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer YOUR_API_TOKEN'
-      },
-      body: JSON.stringify(errorPayload)
-    });
-  } catch (dispatchError) {
-    console.error('Failed to notify Argus engine:', dispatchError);
-  }
+@RestController
+@RequestMapping("/api/v1/telemetry")
+public class TelemetryController {
 
-  res.status(500).json({ error: 'Internal Server Error' });
-});
+    private final RestTemplate restTemplate = new RestTemplate();
+    private final String ARGUS_ENDPOINT = "https://api.yourdomain.com/argus/v1/events";
 
-app.listen(3000);
+    @PostMapping("/log")
+    public ResponseEntity<String> handleLogEvent(@RequestBody LogPayload payload) {
+        
+        if ("ERROR".equalsIgnoreCase(payload.getSeverity())) {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("Authorization", "Bearer YOUR_API_TOKEN");
+
+            HttpEntity<LogPayload> request = new HttpEntity<>(payload, headers);
+            restTemplate.postForEntity(ARGUS_ENDPOINT, request, String.class);
+        }
+
+        return ResponseEntity.ok("Event processed successfully");
+    }
+}
 ```
-
----
 
 ## Future Roadmap & Evolutions
 
 1. **Real-Time Web Dashboard**: Development of a dedicated web interface for live monitoring, data visualization, and real-time event filtering.
 2. **Multi-Channel Alert Dispatcher**: Built-in integrations for webhooks, messaging platforms (Slack, Telegram, Discord), and email alerts.
-3. **Adaptive Rate Limiting**: Built-in protection algorithms to manage traffic bursts and prevent server throttling during high-volume incidents.
+3. **Adaptive Rate Limiting**: Protection algorithms to manage traffic bursts and prevent server throttling during high-volume incidents.
 4. **Plugin Framework**: A modular interface allowing custom storage drivers (Redis, PostgreSQL, ClickHouse) and custom protocol ingestion.
-
----
 
 ## Getting Started
 
 ### Prerequisites
-* Go 1.20+ (or your project's runtime requirements)
 
-### Installation
-Clone the repository and build the binary:
+* Java 17+ (or JDK version used by your project)
+* Maven or Gradle
+
+### Building the Project
+
+Clone the repository and build the JAR:
 
 ```bash
 git clone https://github.com/DottKappa/argus.git
 cd argus
-go build -o argus main.go
+./mvnw clean package
 ```
-
----
 
 ## License
 
