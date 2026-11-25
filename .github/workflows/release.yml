@@ -61,8 +61,7 @@ jobs:
             --main-jar argus.jar `
             --main-class com.argus.Launcher `
             --name Argus `
-            --dest dist `
-            --win-console false
+            --dest dist
 
           # Comprime la cartella in un archivio zip portabile pronto per il download
           Compress-Archive -Path dist/Argus -DestinationPath Argus-Windows-Portable.zip -Force
