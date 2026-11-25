@@ -1,12 +1,17 @@
-version: '3.8'
-
 services:
   argus:
-    build: .
     image: argus-app
     container_name: argus_container
-    environment:
-      - DISPLAY=host.docker.internal:0.0
-      - STEAM_API_KEY=${STEAM_API_KEY}
-    stdin_open: true
-    tty: true
+    restart: unless-stopped
+    networks:
+      - gateway_net
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=256m
+
+networks:
+  gateway_net:
+    external: true

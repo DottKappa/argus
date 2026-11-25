@@ -1,8 +1,11 @@
 FROM eclipse-temurin:21-jdk
 
-# Installazione di Maven e delle dipendenze grafiche Linux per JavaFX
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     maven \
+    xvfb \
+    x11vnc \
+    novnc \
+    websockify \
     libgl1 \
     libglx-mesa0 \
     libgtk-3-0 \
@@ -14,16 +17,19 @@ RUN apt-get update && apt-get install -y \
     libxtst6 \
     && rm -rf /var/lib/apt/lists/*
 
+# Utente non-root con directory di lavoro e home scrivibile
+RUN useradd -m -u 10001 -s /bin/sh appuser
 WORKDIR /app
+RUN chown -R appuser:appuser /app
 
-# Copia e scarica le dipendenze per velocizzare le build successive
-COPY pom.xml .
-RUN mvn dependency:go-offline
+COPY --chown=appuser:appuser pom.xml .
+RUN mvn -o dependency:go-offline || mvn dependency:go-offline
 
-# Copia il resto del sorgente
-COPY src ./src
+COPY --chown=appuser:appuser src ./src
+RUN mvn -o clean compile
 
-# Compila l'applicazione
-RUN mvn clean compile
+USER appuser
+ENV HOME=/app
+ENV DISPLAY=:99
 
-CMD ["mvn", "javafx:run"]
+CMD ["sh", "-c", "Xvfb :99 -screen 0 1280x800x24 -ac & sleep 1 && x11vnc -display :99 -localhost -nopw -forever -shared -rfbport 5900 & websockify --web=/usr/share/novnc/ 127.0.0.1:6080 localhost:5900 & mvn -o javafx:run"]
