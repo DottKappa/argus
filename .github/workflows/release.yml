@@ -77,4 +77,4 @@ jobs:
         run: |
           gh release create ${{ github.ref_name }} Argus-Windows-Portable.zip `
             --title "Release ${{ github.ref_name }}" `
-            --generate-notes
+            --notes "Argus portable release"
