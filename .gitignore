@@ -2,3 +2,7 @@
 target/
 .idea/
 *.iml
+dist/
+steam_api.properties
+src/main/resources/steam_api.properties
+*.zip

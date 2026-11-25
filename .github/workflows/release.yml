@@ -1,0 +1,80 @@
+name: Build & Release Portable App
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    name: Build Windows Portable App (.exe)
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Inject and Obfuscate STEAM_API_KEY
+        shell: pwsh
+        run: |
+          $rawKey = "${{ secrets.STEAM_API_KEY }}"
+          if ([string]::IsNullOrWhiteSpace($rawKey)) {
+            Write-Warning "ATTENZIONE: Il secret STEAM_API_KEY non e stato configurato nei repository secrets di GitHub!"
+            $obfuscated = ""
+          } else {
+            $bytes = [System.Text.Encoding]::UTF8.GetBytes($rawKey)
+            $hexList = @()
+            foreach ($b in $bytes) {
+              $masked = ($b -bxor 0x5A) -band 0xFF
+              $hexList += ("{0:x2}" -f $masked)
+            }
+            $obfuscated = -join $hexList
+            Write-Host "STEAM_API_KEY mascherata con successo per l'iniezione."
+          }
+
+          $resDir = "src/main/resources"
+          if (!(Test-Path $resDir)) {
+            New-Item -ItemType Directory -Path $resDir -Force
+          }
+          "steam.api.payload=$obfuscated" | Set-Content -Path "$resDir/steam_api.properties" -Encoding UTF8
+
+      - name: Build Fat JAR with Maven
+        run: mvn clean package -DskipTests=false
+
+      - name: Create Portable Windows App via jpackage
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path dist -Force
+          
+          # jpackage crea un'immagine applicazione autonoma con JVM 21 inclusa e .exe launcher
+          jpackage `
+            --type app-image `
+            --input target `
+            --main-jar argus.jar `
+            --main-class com.argus.Launcher `
+            --name Argus `
+            --dest dist `
+            --win-console false
+
+          # Comprime la cartella in un archivio zip portabile pronto per il download
+          Compress-Archive -Path dist/Argus -DestinationPath Argus-Windows-Portable.zip -Force
+
+      - name: Release to GitHub
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: Argus-Windows-Portable.zip
+          name: Release ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

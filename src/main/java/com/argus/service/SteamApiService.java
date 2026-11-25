@@ -21,7 +21,7 @@ public class SteamApiService {
     private final ObjectMapper objectMapper;
 
     public SteamApiService() {
-        this(HttpClient.newHttpClient(), System.getenv("STEAM_API_KEY"));
+        this(HttpClient.newHttpClient(), com.argus.util.ApiKeyProvider.getSteamApiKey());
     }
 
     public SteamApiService(HttpClient httpClient, String apiKey)

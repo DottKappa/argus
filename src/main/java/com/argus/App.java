@@ -4,6 +4,7 @@ import com.argus.controller.UserSearchController;
 import com.argus.service.PlayerWorkflowService;
 import com.argus.service.SteamApiService;
 import com.argus.service.SteamPlayerService;
+import com.argus.util.ApiKeyProvider;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -19,7 +20,7 @@ public class App extends Application  {
     {
         HttpClient httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).build();
 
-        String apiKey = System.getenv("STEAM_API_KEY");
+        String apiKey = ApiKeyProvider.getSteamApiKey();
 
         SteamApiService apiService = new SteamApiService(httpClient, apiKey);
         SteamPlayerService playerService = new SteamPlayerService(httpClient, apiKey);
