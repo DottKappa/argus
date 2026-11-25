@@ -70,13 +70,11 @@ jobs:
           Compress-Archive -Path dist/Argus -DestinationPath Argus-Windows-Portable.zip -Force
 
       - name: Release to GitHub
-        uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
-        with:
-          files: Argus-Windows-Portable.zip
-          name: Release ${{ github.ref_name }}
-          draft: false
-          prerelease: false
-          generate_release_notes: true
+        shell: pwsh
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create ${{ github.ref_name }} Argus-Windows-Portable.zip `
+            --title "Release ${{ github.ref_name }}" `
+            --generate-notes
