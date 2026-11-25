@@ -32,4 +32,4 @@ USER appuser
 ENV HOME=/app
 ENV DISPLAY=:99
 
-CMD ["sh", "-c", "Xvfb :99 -screen 0 1280x800x24 -ac & sleep 1 && x11vnc -display :99 -localhost -nopw -forever -shared -rfbport 5900 & websockify --web=/usr/share/novnc/ 127.0.0.1:6080 localhost:5900 & mvn -o javafx:run"]
+CMD ["sh", "-c", "Xvfb :99 -screen 0 1280x800x24 -ac & sleep 1 && x11vnc -display :99 -localhost -nopw -forever -shared -rfbport 5900 & websockify --web=/usr/share/novnc/ 0.0.0.0:6080 localhost:5900 & mvn -o javafx:run"]

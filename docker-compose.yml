@@ -1,10 +1,11 @@
 services:
   argus:
+    build: .
     image: argus-app
     container_name: argus_container
     restart: unless-stopped
-    networks:
-      - gateway_net
+    ports:
+      - "127.0.0.1:6080:6080"
     cap_drop:
       - ALL
     security_opt:
